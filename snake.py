@@ -1,3 +1,4 @@
+from asyncio.windows_events import NULL
 import pygame
 import time
 import random
@@ -19,12 +20,17 @@ def resetCount():
     global COUNT
     COUNT = 0
 
+PREV_DIRECTION = NULL
+def changeDirection(dir):
+    global PREV_DIRECTION
+    PREV_DIRECTION = dir
+
 Q_TABLE = setup_Q_table.make_q_table()
 
 LEARNING_RATE = .2
 EPISLON = .9
 DISCOUNT_FACTOR = .8
-D = .9 #don't know what this is...
+D = .975 #don't know what this is...
 
 
 pygame.init()
@@ -146,9 +152,9 @@ def gameLoop():
         if (game_close == True):
             incrementEpisodeNum()
             resetCount()
-            if EPISODE_NUM < 20:
+            if EPISODE_NUM < 99:
                 gameLoop()
-            if EPISODE_NUM == 20:
+            if EPISODE_NUM == 99:
                 input()
                 gameLoop()
                 
@@ -169,25 +175,72 @@ def gameLoop():
         reward = 0
 
         #Chooses random move or max value move based on episode num, lower epi num is exploration
-        r = random.uniform(0,1)
-        e = EPISLON * pow(D, EPISODE_NUM)
+        if (PREV_DIRECTION == NULL):
+            r = random.uniform(0,1)
+            e = EPISLON * pow(D, EPISODE_NUM)
 
-        if (r > e):
-            #print("max")
-            action = np.argmax(Q_TABLE[curr_state])
+            if (r > e):
+                #print("max")
+                action = np.argmax(Q_TABLE[curr_state])
+            else:
+                #print("r")
+                action = random.randint(0,3)
+            
+            match action:
+                case 0:
+                    pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_LEFT))
+                    pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_LEFT))
+                    changeDirection(pygame.K_LEFT)
+                case 1:
+                    pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT))
+                    pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_RIGHT))
+                    changeDirection(pygame.K_RIGHT)
+                case 2:
+                    pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_UP))
+                    pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_UP))
+                    changeDirection(pygame.K_UP)
+                case 3:
+                    pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_DOWN))
+                    pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_DOWN))
+                    changeDirection(pygame.K_DOWN)    
         else:
-            #print("r")
-            action = random.randint(0,3)
-        
-        match action:
-            case 0:
-                pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_LEFT))
-            case 1:
-                pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT))
-            case 2:
-                pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_UP))
-            case 3:
-                pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_DOWN))    
+            chosen = False
+            while chosen == False:
+                r = random.uniform(0,1)
+                e = EPISLON * pow(D, EPISODE_NUM)
+
+                if (r > e):
+                    #print("max")
+                    action = np.argmax(Q_TABLE[curr_state])
+                else:
+                    #print("r")
+                    action = random.randint(0,3)
+
+                match action:
+                    case 0:
+                        if (PREV_DIRECTION != pygame.K_RIGHT):
+                            pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_LEFT))
+                            pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_LEFT))
+                            changeDirection(pygame.K_LEFT)
+                            chosen = True
+                    case 1:
+                        if (PREV_DIRECTION != pygame.K_LEFT):
+                            pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT))
+                            pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_RIGHT))
+                            changeDirection(pygame.K_RIGHT)
+                            chosen = True
+                    case 2:
+                        if (PREV_DIRECTION != pygame.K_DOWN):
+                            pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_UP))
+                            pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_UP))
+                            changeDirection(pygame.K_UP)
+                            chosen = True
+                    case 3:
+                        if (PREV_DIRECTION != pygame.K_UP):
+                            pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_DOWN))
+                            pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_DOWN))
+                            changeDirection(pygame.K_DOWN)
+                            chosen = True
 
         for event in pygame.event.get():
 
@@ -209,7 +262,7 @@ def gameLoop():
 
         if x1 >= dis_width or x1 < 0 or y1 >= dis_height or y1 < 0:
             #bad reward
-            reward -= 10
+            reward -= 100
             game_close = True
         x1 += x1_change
         y1 += y1_change
@@ -225,9 +278,9 @@ def gameLoop():
         for x in snake_List[:-1]:
             if x == snake_Head:
                 #bad reward
-                reward -= 50
+                reward -= 200
                 game_close = True
-                print("HIT TAIL")
+                #print("HIT TAIL")
 
         our_snake(snake_block, snake_List)
         Your_score(Length_of_snake - 1)
@@ -236,7 +289,7 @@ def gameLoop():
 
         if x1 == foodx and y1 == foody:
             #big reward
-            reward += 50
+            reward += 100
             foodx = round(random.randrange(0, dis_width - snake_block) / 10.0) * 10.0
             foody = round(random.randrange(0, dis_height - snake_block) / 10.0) * 10.0
             Length_of_snake += 1
@@ -250,8 +303,8 @@ def gameLoop():
             reward += 1
         if (new_dist > curr_dist):
             reward -= 1
-        if (reward > 5):
-            print("ATE YUMMY")
+        #if (reward > 5):
+         #   print("ATE YUMMY")
         if (reward < -5):
             print(EPISODE_NUM)
             print("LOST")
