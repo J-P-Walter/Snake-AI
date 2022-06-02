@@ -1,13 +1,16 @@
 import pygame
 import time
 import random
-import keyboard
+import setup_Q_table
 
 COUNT = 0
-
-def increment():
+def incrementCount():
     global COUNT
     COUNT = COUNT+1
+
+Q_TABLE = setup_Q_table.make_q_table()
+
+print(len(Q_TABLE))
 
 pygame.init()
  
@@ -48,6 +51,26 @@ def message(msg, color):
     mesg = font_style.render(msg, True, color)
     dis.blit(mesg, [dis_width / 6, dis_height / 3])
 
+def get_state(food_x, food_y, snake_x, snake_y, snake_list):
+    state = [False] * 12
+
+    #Wall left
+    if (snake_x - snake_block < 0 or snake_list.count([snake_x - snake_block, snake_y]) == 1):
+        print("wall left")
+        state[0] = True
+    #Wall right
+    if (snake_x + snake_block >= dis_width or snake_list.count([snake_x + snake_block, snake_y]) == 1):
+        print("wall right")
+        state[1] = True
+    #Wall up
+    if (snake_y - snake_block < 0 or snake_list.count([snake_x, snake_y - snake_block]) == 1):
+        print("wall up")
+        state[2] = True
+    #Wall down
+    if (snake_y + snake_block >= dis_height or snake_list.count([snake_x, snake_y + snake_block]) == 1):
+        print("wall down")
+        state[3] = True
+
 
 def gameLoop():
     game_over = False
@@ -65,19 +88,18 @@ def gameLoop():
     foodx = round(random.randrange(0, dis_width - snake_block) / 10.0) * 10.0
     foody = round(random.randrange(0, dis_height - snake_block) / 10.0) * 10.0
     
-
+    #pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT))
 
     while not game_over:
-        print(COUNT)
-        pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_LEFT))
-        #pygame.event.Event(pygame.KEYDOWN, K_LEFT)
         if (game_close == True):
-            increment()
+            incrementCount()
             if COUNT < 5:
                 gameLoop()
             else:
                 game_over = True
                 game_close = False
+        time.sleep(.1)
+        get_state(foodx, foody, x1, y1, snake_List)
 
         for event in pygame.event.get():
 
@@ -129,6 +151,6 @@ def gameLoop():
 
     pygame.quit()
     quit()
- 
- 
-gameLoop()
+
+if __name__ == "__main__":
+    gameLoop()
