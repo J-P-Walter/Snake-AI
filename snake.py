@@ -10,7 +10,7 @@ def incrementCount():
 
 Q_TABLE = setup_Q_table.make_q_table()
 
-print(len(Q_TABLE))
+#print(len(Q_TABLE))
 
 pygame.init()
  
@@ -51,26 +51,60 @@ def message(msg, color):
     mesg = font_style.render(msg, True, color)
     dis.blit(mesg, [dis_width / 6, dis_height / 3])
 
-def get_state(food_x, food_y, snake_x, snake_y, snake_list):
+def get_state(food_x, food_y, snake_x, snake_y, snake_x_change, snake_y_change, snake_list):
     state = [False] * 12
 
     #Wall left
     if (snake_x - snake_block < 0 or snake_list.count([snake_x - snake_block, snake_y]) == 1):
-        print("wall left")
+       # print("wall left")
         state[0] = True
     #Wall right
     if (snake_x + snake_block >= dis_width or snake_list.count([snake_x + snake_block, snake_y]) == 1):
-        print("wall right")
+       # print("wall right")
         state[1] = True
     #Wall up
     if (snake_y - snake_block < 0 or snake_list.count([snake_x, snake_y - snake_block]) == 1):
-        print("wall up")
+        #print("wall up")
         state[2] = True
     #Wall down
     if (snake_y + snake_block >= dis_height or snake_list.count([snake_x, snake_y + snake_block]) == 1):
-        print("wall down")
+        #print("wall down")
         state[3] = True
 
+    #Moving left
+    if (snake_x_change < 0):
+        #print("moving left")
+        state[4] = True
+    #Moving right
+    if (snake_x_change > 0):
+        #print("moving right")
+        state[5] = True
+    #Moving up
+    if (snake_y_change < 0):
+        #print("moving up")
+        state[6] = True
+    #Moving down
+    if (snake_y_change > 0):
+        #print("moving down")
+        state[7] = True
+
+    #Food left
+    if (food_x < snake_x):
+        #print("food left")
+        state[8] = True
+    #Food right
+    if (food_x > snake_x):
+        #print("food right")
+        state[9] = True
+    #Food up 
+    if (food_y < snake_y):
+        #print("food up")
+        state[10] = True
+    #Food down
+    if (food_y > snake_y):
+        #print("food down")
+        state[11] = True
+    return state
 
 def gameLoop():
     game_over = False
@@ -98,8 +132,10 @@ def gameLoop():
             else:
                 game_over = True
                 game_close = False
-        time.sleep(.1)
-        get_state(foodx, foody, x1, y1, snake_List)
+        time.sleep(.5)
+        state = get_state(foodx, foody, x1, y1, x1_change, y1_change, snake_List)
+
+        print(Q_TABLE[state])
 
         for event in pygame.event.get():
 
