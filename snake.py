@@ -24,7 +24,7 @@ Q_TABLE = setup_Q_table.make_q_table()
 LEARNING_RATE = .2
 EPISLON = .9
 DISCOUNT_FACTOR = .8
-D = .985 #don't know what this is...
+D = .9 #don't know what this is...
 
 
 pygame.init()
@@ -143,14 +143,15 @@ def gameLoop():
     #pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT))
 
     while not game_over:
-        print(COUNT)
         if (game_close == True):
             incrementEpisodeNum()
             resetCount()
-            if EPISODE_NUM < 10:
+            if EPISODE_NUM < 20:
                 gameLoop()
-            if EPISODE_NUM == 10:
+            if EPISODE_NUM == 20:
                 input()
+                gameLoop()
+                
             else:
                 print("DONE WITH TRAINING")
                 game_over = True
@@ -159,6 +160,8 @@ def gameLoop():
                 w = csv.writer(open("output.csv", "w"))
                 for key, val in Q_TABLE.items():
                     w.writerow([key, val])
+
+                break
 
         #Gets current state and distance, will be used at the end to calc reward
         curr_state = tuple(get_state(foodx, foody, x1, y1, x1_change, y1_change, snake_List))
@@ -222,8 +225,9 @@ def gameLoop():
         for x in snake_List[:-1]:
             if x == snake_Head:
                 #bad reward
-                reward -= 10
+                reward -= 50
                 game_close = True
+                print("HIT TAIL")
 
         our_snake(snake_block, snake_List)
         Your_score(Length_of_snake - 1)
@@ -232,7 +236,7 @@ def gameLoop():
 
         if x1 == foodx and y1 == foody:
             #big reward
-            reward += 10
+            reward += 50
             foodx = round(random.randrange(0, dis_width - snake_block) / 10.0) * 10.0
             foody = round(random.randrange(0, dis_height - snake_block) / 10.0) * 10.0
             Length_of_snake += 1
@@ -244,15 +248,18 @@ def gameLoop():
 
         if (new_dist < curr_dist):
             reward += 1
+        if (new_dist > curr_dist):
+            reward -= 1
         if (reward > 5):
             print("ATE YUMMY")
-        if (reward < 0):
+        if (reward < -5):
             print(EPISODE_NUM)
             print("LOST")
         #update q table
         Q_TABLE[curr_state][action] = Q_TABLE[curr_state][action] + LEARNING_RATE * (reward + DISCOUNT_FACTOR * np.max(Q_TABLE[new_state]) - Q_TABLE[curr_state][action])
-
+        
         if COUNT == 2000:
+            resetCount()
             print(EPISODE_NUM)
             print("Episode RAN OUT OF TIME")
             game_close = True
