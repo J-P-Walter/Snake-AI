@@ -1,4 +1,5 @@
 import itertools
+import csv
 
 #STATES:
 #wall left, wall right, wall up, wall down, moving left, moving right, moving up, moving down, food left, food right, food up, food down 
@@ -7,7 +8,6 @@ import itertools
 #left, right, up, down
 def make_states():
     table = list(itertools.product([False, True], repeat=12)) #wow this is big lol
-    copy = table
 
     #Removing "bad" states for clarity. Might leave in if run into problems later, as they never should show up,
     #but thinking it might be helpful to visual debug somewhat.
