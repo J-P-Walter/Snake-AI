@@ -130,6 +130,77 @@ def get_state(food_x, food_y, snake_x, snake_y, snake_x_change, snake_y_change, 
 def get_distance(food_x, food_y, snake_x, snake_y):
     return (math.dist([food_x, food_y],[snake_x, snake_y]))
 
+def chooseAction(curr_state):
+    #Chooses random move or max value move based on episode num, lower epi num is exploration
+    #Also prevents snake from doubling back on itself
+    if (PREV_DIRECTION == NULL):
+        r = random.uniform(0,1)
+        e = EPISLON * pow(D, EPISODE_NUM)
+
+        if (r > e):
+                #print("max")
+            action = np.argmax(Q_TABLE[curr_state])
+        else:
+                #print("r")
+            action = random.randint(0,3)
+            
+        match action:
+            case 0:
+                pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_LEFT))
+                pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_LEFT))
+                changeDirection(pygame.K_LEFT)
+            case 1:
+                pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT))
+                pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_RIGHT))
+                changeDirection(pygame.K_RIGHT)
+            case 2:
+                pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_UP))
+                pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_UP))
+                changeDirection(pygame.K_UP)
+            case 3:
+                pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_DOWN))
+                pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_DOWN))
+                changeDirection(pygame.K_DOWN)    
+    else:
+        chosen = False
+        while chosen == False:
+            r = random.uniform(0,1)
+            e = EPISLON * pow(D, EPISODE_NUM)
+
+            if (r > e):
+                    #print("max")
+                action = np.argmax(Q_TABLE[curr_state])
+            else:
+                    #print("r")
+                action = random.randint(0,3)
+
+            match action:
+                case 0:
+                    if (PREV_DIRECTION != pygame.K_RIGHT):
+                        pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_LEFT))
+                        pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_LEFT))
+                        changeDirection(pygame.K_LEFT)
+                        chosen = True
+                case 1:
+                    if (PREV_DIRECTION != pygame.K_LEFT):
+                        pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT))
+                        pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_RIGHT))
+                        changeDirection(pygame.K_RIGHT)
+                        chosen = True
+                case 2:
+                    if (PREV_DIRECTION != pygame.K_DOWN):
+                        pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_UP))
+                        pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_UP))
+                        changeDirection(pygame.K_UP)
+                        chosen = True
+                case 3:
+                    if (PREV_DIRECTION != pygame.K_UP):
+                        pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_DOWN))
+                        pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_DOWN))
+                        changeDirection(pygame.K_DOWN)
+                        chosen = True
+    return action
+
 def gameLoop():
     game_over = False
     game_close = False
@@ -174,73 +245,7 @@ def gameLoop():
         curr_dist = get_distance(foodx, foody, x1, y1)
         reward = 0
 
-        #Chooses random move or max value move based on episode num, lower epi num is exploration
-        if (PREV_DIRECTION == NULL):
-            r = random.uniform(0,1)
-            e = EPISLON * pow(D, EPISODE_NUM)
-
-            if (r > e):
-                #print("max")
-                action = np.argmax(Q_TABLE[curr_state])
-            else:
-                #print("r")
-                action = random.randint(0,3)
-            
-            match action:
-                case 0:
-                    pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_LEFT))
-                    pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_LEFT))
-                    changeDirection(pygame.K_LEFT)
-                case 1:
-                    pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT))
-                    pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_RIGHT))
-                    changeDirection(pygame.K_RIGHT)
-                case 2:
-                    pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_UP))
-                    pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_UP))
-                    changeDirection(pygame.K_UP)
-                case 3:
-                    pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_DOWN))
-                    pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_DOWN))
-                    changeDirection(pygame.K_DOWN)    
-        else:
-            chosen = False
-            while chosen == False:
-                r = random.uniform(0,1)
-                e = EPISLON * pow(D, EPISODE_NUM)
-
-                if (r > e):
-                    #print("max")
-                    action = np.argmax(Q_TABLE[curr_state])
-                else:
-                    #print("r")
-                    action = random.randint(0,3)
-
-                match action:
-                    case 0:
-                        if (PREV_DIRECTION != pygame.K_RIGHT):
-                            pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_LEFT))
-                            pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_LEFT))
-                            changeDirection(pygame.K_LEFT)
-                            chosen = True
-                    case 1:
-                        if (PREV_DIRECTION != pygame.K_LEFT):
-                            pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT))
-                            pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_RIGHT))
-                            changeDirection(pygame.K_RIGHT)
-                            chosen = True
-                    case 2:
-                        if (PREV_DIRECTION != pygame.K_DOWN):
-                            pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_UP))
-                            pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_UP))
-                            changeDirection(pygame.K_UP)
-                            chosen = True
-                    case 3:
-                        if (PREV_DIRECTION != pygame.K_UP):
-                            pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_DOWN))
-                            pygame.event.post(pygame.event.Event(pygame.KEYUP, key=pygame.K_DOWN))
-                            changeDirection(pygame.K_DOWN)
-                            chosen = True
+        action = chooseAction(curr_state)
 
         for event in pygame.event.get():
 
@@ -320,6 +325,8 @@ def gameLoop():
 
     pygame.quit()
     quit()
+
+
 
 if __name__ == "__main__":
     gameLoop()
