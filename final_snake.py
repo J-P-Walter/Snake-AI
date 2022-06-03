@@ -1,9 +1,7 @@
 from asyncio.windows_events import NULL
 import pygame
 import random
-import csv
 import numpy as np
-import re
 
 PREV_DIRECTION = NULL
 def changeDirection(dir):
