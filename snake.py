@@ -1,6 +1,5 @@
 from asyncio.windows_events import NULL
 import pygame
-import time
 import random
 import setup_Q_table
 import math
@@ -29,9 +28,14 @@ Q_TABLE = setup_Q_table.make_q_table()
 
 LEARNING_RATE = .2
 EPISLON = .9
-DISCOUNT_FACTOR = .8
+DISCOUNT_FACTOR = .9
 D = .975 #don't know what this is...
 
+MAX_SCORE = 0
+def updateScore(num):
+    global MAX_SCORE
+    if (num > MAX_SCORE):
+        MAX_SCORE = num
 
 pygame.init()
  
@@ -221,11 +225,12 @@ def gameLoop():
 
     while not game_over:
         if (game_close == True):
+            updateScore(Length_of_snake - 1)
             incrementEpisodeNum()
             resetCount()
-            if EPISODE_NUM < 99:
+            if EPISODE_NUM < 299:
                 gameLoop()
-            if EPISODE_NUM == 99:
+            if EPISODE_NUM == 299:
                 input()
                 gameLoop()
                 
@@ -233,7 +238,8 @@ def gameLoop():
                 print("DONE WITH TRAINING")
                 game_over = True
                 game_close = False
-
+                print("MAX SCORE:")
+                print(MAX_SCORE)
                 w = csv.writer(open("output.csv", "w"))
                 for key, val in Q_TABLE.items():
                     w.writerow([key, val])
@@ -316,7 +322,7 @@ def gameLoop():
         #update q table
         Q_TABLE[curr_state][action] = Q_TABLE[curr_state][action] + LEARNING_RATE * (reward + DISCOUNT_FACTOR * np.max(Q_TABLE[new_state]) - Q_TABLE[curr_state][action])
         
-        if COUNT == 2000:
+        if COUNT == 3000:
             resetCount()
             print(EPISODE_NUM)
             print("Episode RAN OUT OF TIME")
@@ -330,3 +336,7 @@ def gameLoop():
 
 if __name__ == "__main__":
     gameLoop()
+
+#TODO: Make the food not spawn under snake tail
+#TODO: Write program for final Q-Table
+#TODO: write README
