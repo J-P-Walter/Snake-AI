@@ -2,6 +2,8 @@ from asyncio.windows_events import NULL
 import pygame
 import random
 import numpy as np
+import csv
+import ast
 
 PREV_DIRECTION = NULL
 def changeDirection(dir):
@@ -9,7 +11,14 @@ def changeDirection(dir):
     PREV_DIRECTION = dir
 
 def readInTable(table_name):
-    global Q_TABLE   
+    global Q_TABLE 
+    file = open(table_name)
+    csvreader = csv.reader(file)
+
+    for row in csvreader:
+        if len(row) == 2:
+            Q_TABLE[ast.literal_eval(row[0])] = ast.literal_eval(row[1])
+
 
 Q_TABLE = {}
 
@@ -159,7 +168,6 @@ def chooseAction(curr_state):
 
 def gameLoop():
     readInTable('output.csv')
-    print(Q_TABLE)
 
     game_over = False
     game_close = False
