@@ -1,41 +1,19 @@
 from asyncio.windows_events import NULL
 import pygame
 import random
-import setup_Q_table
-import math
 import csv
 import numpy as np
-
-EPISODE_NUM = 0
-def incrementEpisodeNum():
-    global EPISODE_NUM
-    EPISODE_NUM = EPISODE_NUM+1
-
-COUNT = 0
-def incrementCountNum():
-    global COUNT
-    COUNT = COUNT+1
-def resetCount():
-    global COUNT
-    COUNT = 0
+import re
 
 PREV_DIRECTION = NULL
 def changeDirection(dir):
     global PREV_DIRECTION
     PREV_DIRECTION = dir
 
-Q_TABLE = setup_Q_table.make_q_table()
+def readInTable(table_name):
+    global Q_TABLE   
 
-LEARNING_RATE = .2
-EPISLON = .9
-DISCOUNT_FACTOR = .9
-D = .975 #don't know what this is...
-
-MAX_SCORE = 0
-def updateScore(num):
-    global MAX_SCORE
-    if (num > MAX_SCORE):
-        MAX_SCORE = num
+Q_TABLE = {}
 
 pygame.init()
  
@@ -65,12 +43,9 @@ def Your_score(score):
     value = score_font.render("Your Score: " + str(score), True, yellow)
     dis.blit(value, [0, 0])
  
- 
- 
 def our_snake(snake_block, snake_list):
     for x in snake_list:
         pygame.draw.rect(dis, black, [x[0], x[1], snake_block, snake_block])
- 
  
 def message(msg, color):
     mesg = font_style.render(msg, True, color)
@@ -131,23 +106,11 @@ def get_state(food_x, food_y, snake_x, snake_y, snake_x_change, snake_y_change, 
         state[11] = True
     return state
 
-def get_distance(food_x, food_y, snake_x, snake_y):
-    return (math.dist([food_x, food_y],[snake_x, snake_y]))
-
 def chooseAction(curr_state):
     #Chooses random move or max value move based on episode num, lower epi num is exploration
     #Also prevents snake from doubling back on itself
     if (PREV_DIRECTION == NULL):
-        r = random.uniform(0,1)
-        e = EPISLON * pow(D, EPISODE_NUM)
-
-        if (r > e):
-                #print("max")
-            action = np.argmax(Q_TABLE[curr_state])
-        else:
-                #print("r")
-            action = random.randint(0,3)
-            
+        action = np.argmax(Q_TABLE[tuple(curr_state)])  
         match action:
             case 0:
                 pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_LEFT))
@@ -168,16 +131,7 @@ def chooseAction(curr_state):
     else:
         chosen = False
         while chosen == False:
-            r = random.uniform(0,1)
-            e = EPISLON * pow(D, EPISODE_NUM)
-
-            if (r > e):
-                    #print("max")
-                action = np.argmax(Q_TABLE[curr_state])
-            else:
-                    #print("r")
-                action = random.randint(0,3)
-
+            action = np.argmax(Q_TABLE[tuple(curr_state)])
             match action:
                 case 0:
                     if (PREV_DIRECTION != pygame.K_RIGHT):
@@ -206,6 +160,9 @@ def chooseAction(curr_state):
     return action
 
 def gameLoop():
+    readInTable('output.csv')
+    print(Q_TABLE)
+
     game_over = False
     game_close = False
  
@@ -224,32 +181,22 @@ def gameLoop():
     #pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT))
 
     while not game_over:
-        if (game_close == True):
-            updateScore(Length_of_snake - 1)
-            incrementEpisodeNum()
-            resetCount()
-            if EPISODE_NUM < 299:
-                gameLoop()
-            if EPISODE_NUM == 299:
-                input()
-                gameLoop()
-                
-            else:
-                print("DONE WITH TRAINING")
-                game_over = True
-                game_close = False
-                print("MAX SCORE:")
-                print(MAX_SCORE)
-                w = csv.writer(open("output.csv", "w"))
-                for key, val in Q_TABLE.items():
-                    w.writerow([key, val])
-
-                break
+        while game_close == True:
+            dis.fill(blue)
+            message("You Lost! Press C-Play Again or Q-Quit", red)
+            Your_score(Length_of_snake - 1)
+            pygame.display.update()
+ 
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_q:
+                        game_over = True
+                        game_close = False
+                    if event.key == pygame.K_c:
+                        gameLoop()
 
         #Gets current state and distance, will be used at the end to calc reward
         curr_state = tuple(get_state(foodx, foody, x1, y1, x1_change, y1_change, snake_List))
-        curr_dist = get_distance(foodx, foody, x1, y1)
-        reward = 0
 
         action = chooseAction(curr_state)
 
@@ -272,8 +219,6 @@ def gameLoop():
                     x1_change = 0
 
         if x1 >= dis_width or x1 < 0 or y1 >= dis_height or y1 < 0:
-            #bad reward
-            reward -= 100
             game_close = True
         x1 += x1_change
         y1 += y1_change
@@ -288,10 +233,7 @@ def gameLoop():
 
         for x in snake_List[:-1]:
             if x == snake_Head:
-                #bad reward
-                reward -= 200
                 game_close = True
-                #print("HIT TAIL")
 
         our_snake(snake_block, snake_List)
         Your_score(Length_of_snake - 1)
@@ -299,35 +241,11 @@ def gameLoop():
         pygame.display.update()
 
         if x1 == foodx and y1 == foody:
-            #big reward
-            reward += 100
             foodx = round(random.randrange(0, dis_width - snake_block) / 10.0) * 10.0
             foody = round(random.randrange(0, dis_height - snake_block) / 10.0) * 10.0
             Length_of_snake += 1
 
         clock.tick(snake_speed)
-
-        new_state = tuple(get_state(foodx, foody, x1, y1, x1_change, y1_change, snake_List))
-        new_dist = get_distance(foodx, foody, x1, y1)
-
-        if (new_dist < curr_dist):
-            reward += 1
-        if (new_dist > curr_dist):
-            reward -= 1
-        #if (reward > 5):
-         #   print("ATE YUMMY")
-        if (reward < -5):
-            print(EPISODE_NUM)
-            print("LOST")
-        #update q table
-        Q_TABLE[curr_state][action] = Q_TABLE[curr_state][action] + LEARNING_RATE * (reward + DISCOUNT_FACTOR * np.max(Q_TABLE[new_state]) - Q_TABLE[curr_state][action])
-        
-        if COUNT == 3000:
-            resetCount()
-            print(EPISODE_NUM)
-            print("Episode RAN OUT OF TIME")
-            game_close = True
-        incrementCountNum()
 
     pygame.quit()
     quit()

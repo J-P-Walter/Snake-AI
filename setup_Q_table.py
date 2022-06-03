@@ -59,6 +59,7 @@ def make_q_table():
     Q_table = {}
 
     for s in states:
+        print(type(s))
         Q_table[s] = [0, 0, 0, 0]
     
     return Q_table
