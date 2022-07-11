@@ -6,11 +6,11 @@ import math
 import csv
 import numpy as np
 
+# TRAINING STUFF
 EPISODE_NUM = 0
 def incrementEpisodeNum():
     global EPISODE_NUM
     EPISODE_NUM = EPISODE_NUM+1
-
 COUNT = 0
 def incrementCountNum():
     global COUNT
@@ -18,14 +18,11 @@ def incrementCountNum():
 def resetCount():
     global COUNT
     COUNT = 0
-
 PREV_DIRECTION = NULL
 def changeDirection(dir):
     global PREV_DIRECTION
     PREV_DIRECTION = dir
-
 Q_TABLE = setup_Q_table.make_q_table()
-
 LEARNING_RATE = .2
 EPISLON = .9
 DISCOUNT_FACTOR = .9
@@ -65,72 +62,58 @@ def Your_score(score):
     value = score_font.render("Your Score: " + str(score), True, yellow)
     dis.blit(value, [0, 0])
  
- 
- 
 def our_snake(snake_block, snake_list):
     for x in snake_list:
         pygame.draw.rect(dis, black, [x[0], x[1], snake_block, snake_block])
- 
  
 def message(msg, color):
     mesg = font_style.render(msg, True, color)
     dis.blit(mesg, [dis_width / 6, dis_height / 3])
 
+#Generates state of game based on walls, direction, and food location
 def get_state(food_x, food_y, snake_x, snake_y, snake_x_change, snake_y_change, snake_list):
     state = [False] * 12
-
     #Wall left
     if (snake_x - snake_block < 0 or snake_list.count([snake_x - snake_block, snake_y]) == 1):
-       # print("wall left")
         state[0] = True
     #Wall right
     if (snake_x + snake_block >= dis_width or snake_list.count([snake_x + snake_block, snake_y]) == 1):
-       # print("wall right")
         state[1] = True
     #Wall up
     if (snake_y - snake_block < 0 or snake_list.count([snake_x, snake_y - snake_block]) == 1):
-        #print("wall up")
         state[2] = True
     #Wall down
     if (snake_y + snake_block >= dis_height or snake_list.count([snake_x, snake_y + snake_block]) == 1):
-        #print("wall down")
         state[3] = True
 
     #Moving left
     if (snake_x_change < 0):
-        #print("moving left")
         state[4] = True
     #Moving right
     if (snake_x_change > 0):
-        #print("moving right")
         state[5] = True
     #Moving up
     if (snake_y_change < 0):
-        #print("moving up")
         state[6] = True
     #Moving down
     if (snake_y_change > 0):
-        #print("moving down")
         state[7] = True
 
     #Food left
     if (food_x < snake_x):
-        #print("food left")
         state[8] = True
     #Food right
     if (food_x > snake_x):
-        #print("food right")
         state[9] = True
     #Food up 
     if (food_y < snake_y):
-        #print("food up")
         state[10] = True
     #Food down
     if (food_y > snake_y):
-        #print("food down")
         state[11] = True
     return state
 
+#Distance from snake to food, used in reward
 def get_distance(food_x, food_y, snake_x, snake_y):
     return (math.dist([food_x, food_y],[snake_x, snake_y]))
 
@@ -141,11 +124,9 @@ def chooseAction(curr_state):
         r = random.uniform(0,1)
         e = EPISLON * pow(D, EPISODE_NUM)
 
-        if (r > e):
-                #print("max")
+        if (r > e): #Max move
             action = np.argmax(Q_TABLE[curr_state])
-        else:
-                #print("r")
+        else:       #Random move
             action = random.randint(0,3)
             
         match action:
@@ -172,10 +153,8 @@ def chooseAction(curr_state):
             e = EPISLON * pow(D, EPISODE_NUM)
 
             if (r > e):
-                    #print("max")
                 action = np.argmax(Q_TABLE[curr_state])
             else:
-                    #print("r")
                 action = random.randint(0,3)
 
             match action:
@@ -220,8 +199,6 @@ def gameLoop():
  
     foodx = round(random.randrange(0, dis_width - snake_block) / 10.0) * 10.0
     foody = round(random.randrange(0, dis_height - snake_block) / 10.0) * 10.0
-    
-    #pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT))
 
     while not game_over:
         if (game_close == True):
@@ -243,7 +220,6 @@ def gameLoop():
                 w = csv.writer(open("output.csv", "w"))
                 for key, val in Q_TABLE.items():
                     w.writerow([key, val])
-
                 break
 
         #Gets current state and distance, will be used at the end to calc reward
@@ -254,7 +230,6 @@ def gameLoop():
         action = chooseAction(curr_state)
 
         for event in pygame.event.get():
-
             if event.type == pygame.QUIT:
                 game_over = True
             if event.type == pygame.KEYDOWN:
@@ -270,7 +245,8 @@ def gameLoop():
                 elif event.key == pygame.K_DOWN:
                     y1_change = snake_block
                     x1_change = 0
-
+        
+        #Check for hitting edge
         if x1 >= dis_width or x1 < 0 or y1 >= dis_height or y1 < 0:
             #bad reward
             reward -= 100
@@ -286,18 +262,19 @@ def gameLoop():
         if len(snake_List) > Length_of_snake:
             del snake_List[0]
 
+        #Check for hitting tail
         for x in snake_List[:-1]:
             if x == snake_Head:
                 #bad reward
                 reward -= 200
                 game_close = True
-                #print("HIT TAIL")
 
         our_snake(snake_block, snake_List)
         Your_score(Length_of_snake - 1)
 
         pygame.display.update()
 
+        #Check for eating food
         if x1 == foodx and y1 == foody:
             #big reward
             reward += 100
@@ -310,12 +287,11 @@ def gameLoop():
         new_state = tuple(get_state(foodx, foody, x1, y1, x1_change, y1_change, snake_List))
         new_dist = get_distance(foodx, foody, x1, y1)
 
+        #Small rewards for getting closer
         if (new_dist < curr_dist):
             reward += 1
         if (new_dist > curr_dist):
             reward -= 1
-        #if (reward > 5):
-         #   print("ATE YUMMY")
         if (reward < -5):
             print(EPISODE_NUM)
             print("LOST")
@@ -338,5 +314,4 @@ if __name__ == "__main__":
     gameLoop()
 
 #TODO: bug where snake eats food, food "under" snake for a frame, snake doesn't know what to do
-#TODO: Write program for final Q-Table
-#TODO: write README
+#TODO food spawns under snake, probably shouldn't do that

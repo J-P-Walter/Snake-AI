@@ -63,59 +63,45 @@ def get_state(food_x, food_y, snake_x, snake_y, snake_x_change, snake_y_change, 
 
     #Wall left
     if (snake_x - snake_block < 0 or snake_list.count([snake_x - snake_block, snake_y]) == 1):
-       # print("wall left")
         state[0] = True
     #Wall right
     if (snake_x + snake_block >= dis_width or snake_list.count([snake_x + snake_block, snake_y]) == 1):
-       # print("wall right")
         state[1] = True
     #Wall up
     if (snake_y - snake_block < 0 or snake_list.count([snake_x, snake_y - snake_block]) == 1):
-        #print("wall up")
         state[2] = True
     #Wall down
     if (snake_y + snake_block >= dis_height or snake_list.count([snake_x, snake_y + snake_block]) == 1):
-        #print("wall down")
         state[3] = True
 
     #Moving left
     if (snake_x_change < 0):
-        #print("moving left")
         state[4] = True
     #Moving right
     if (snake_x_change > 0):
-        #print("moving right")
         state[5] = True
     #Moving up
     if (snake_y_change < 0):
-        #print("moving up")
         state[6] = True
     #Moving down
     if (snake_y_change > 0):
-        #print("moving down")
         state[7] = True
 
     #Food left
     if (food_x < snake_x):
-        #print("food left")
         state[8] = True
     #Food right
     if (food_x > snake_x):
-        #print("food right")
         state[9] = True
     #Food up 
     if (food_y < snake_y):
-        #print("food up")
         state[10] = True
     #Food down
     if (food_y > snake_y):
-        #print("food down")
         state[11] = True
     return state
 
 def chooseAction(curr_state):
-    #Chooses random move or max value move based on episode num, lower epi num is exploration
-    #Also prevents snake from doubling back on itself
     if (PREV_DIRECTION == NULL):
         action = np.argmax(Q_TABLE[tuple(curr_state)])  
         match action:
@@ -183,8 +169,6 @@ def gameLoop():
  
     foodx = round(random.randrange(0, dis_width - snake_block) / 10.0) * 10.0
     foody = round(random.randrange(0, dis_height - snake_block) / 10.0) * 10.0
-    
-    #pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT))
 
     while not game_over:
         while game_close == True:
@@ -207,7 +191,6 @@ def gameLoop():
         action = chooseAction(curr_state)
 
         for event in pygame.event.get():
-
             if event.type == pygame.QUIT:
                 game_over = True
             if event.type == pygame.KEYDOWN:
@@ -260,7 +243,3 @@ def gameLoop():
 
 if __name__ == "__main__":
     gameLoop()
-
-#TODO: bug where snake eats food, food "under" snake for a frame, snake doesn't know what to do
-#TODO: Write program for final Q-Table
-#TODO: write README
