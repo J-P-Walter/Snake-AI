@@ -26,7 +26,7 @@ Q_TABLE = setup_Q_table.make_q_table()
 LEARNING_RATE = .2
 EPISLON = .9
 DISCOUNT_FACTOR = .9
-D = .975 #don't know what this is...
+D = .975
 
 MAX_SCORE = 0
 def updateScore(num):
@@ -34,6 +34,7 @@ def updateScore(num):
     if (num > MAX_SCORE):
         MAX_SCORE = num
 
+# Runs on a modified version of Edureka's snake game
 pygame.init()
  
 white = (255, 255, 255)
@@ -70,19 +71,22 @@ def message(msg, color):
     mesg = font_style.render(msg, True, color)
     dis.blit(mesg, [dis_width / 6, dis_height / 3])
 
-#Generates state of game based on walls, direction, and food location
+# Generates state of game based on surrounding walls,
+# current direction of snake, and food location in 
+# relation to the current position of the head of 
+# the snake
 def get_state(food_x, food_y, snake_x, snake_y, snake_x_change, snake_y_change, snake_list):
     state = [False] * 12
-    #Wall left
+    #Wall/body left
     if (snake_x - snake_block < 0 or snake_list.count([snake_x - snake_block, snake_y]) == 1):
         state[0] = True
-    #Wall right
+    #Wall/body right
     if (snake_x + snake_block >= dis_width or snake_list.count([snake_x + snake_block, snake_y]) == 1):
         state[1] = True
-    #Wall up
+    #Wall/body up
     if (snake_y - snake_block < 0 or snake_list.count([snake_x, snake_y - snake_block]) == 1):
         state[2] = True
-    #Wall down
+    #Wall/body down
     if (snake_y + snake_block >= dis_height or snake_list.count([snake_x, snake_y + snake_block]) == 1):
         state[3] = True
 
@@ -314,4 +318,3 @@ if __name__ == "__main__":
     gameLoop()
 
 #TODO: bug where snake eats food, food "under" snake for a frame, snake doesn't know what to do
-#TODO food spawns under snake, probably shouldn't do that
